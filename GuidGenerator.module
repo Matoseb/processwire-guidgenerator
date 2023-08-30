@@ -28,8 +28,8 @@ class GuidGenerator extends WireData implements Module {
     return array(
       'title' => 'GUID / UUID Generator',
       'summary' => 'Generate a globally unique identifier (GUID)',
-      'version' => 001,
-      'href' => 'https://github.com/justonestep/processwire-guidgenerator',
+      'version' => 002,
+      'href' => 'https://github.com/Matoseb/processwire-guidgenerator',
       'singular' => true,
       'autoload' => true,
     );
@@ -46,7 +46,7 @@ class GuidGenerator extends WireData implements Module {
   public function ready() {
     $this->addHookProperty('InputfieldText::generateGuid', $this, 'addProperty');
     $this->addHookAfter('InputfieldText::getConfigInputfields', $this, 'addInputfield');
-    $this->addHookBefore('InputfieldText::render', $this, 'generateGuidValue');
+    $this->addHookBefore('Pages::added', $this, 'fillGuid');
   }
 
   /**
@@ -77,6 +77,7 @@ class GuidGenerator extends WireData implements Module {
 
     if ($data->generateGuid) {
       $field->attr('checked', 'checked');
+
     } else {
       $field->collapsed = Inputfield::collapsedYes;
     }
@@ -85,28 +86,20 @@ class GuidGenerator extends WireData implements Module {
   }
 
   /**
-   * Assign a GUID
+   * Assign all GUID on page creation
    *
    * @param HookEvent $event
    */
-  public function generateGuidValue(HookEvent $event) {
-    if (!$event->object->generateGuid) return;
+  public function fillGuid(HookEvent $event) {
+    // Get the object the event occurred on, if needed
+    $page = $event->arguments(0);
 
-    $field = $event->object;
-    $page = $this->pages->get($this->input->get->id);
-
-    $field->setAttribute('disabled', true);
-
-    // empty field? generate GUID
-    if (!$field->value) {
-      $guid = $this->createGUID();
-
-      // check uniqueness
-      if ($this->pages->count("{$field->name}={$guid}")) $this->generateGuidValue($event);
-
-      $field->set('value', $guid);
-      $page->setAndSave($field->name, $guid);
+    $fields = $this->fields->find('generateGuid=1');
+    foreach ($fields as $field) {
+      $page->setAndSave($field->name, $this->createGUID(), ['quiet' => true]);
     }
+
+    $event->arguments(0, $page);
   }
 
   /**
