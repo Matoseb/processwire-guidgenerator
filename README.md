@@ -1,5 +1,3 @@
-# WARNING: This repository is no longer maintained :warning:
-
 > Fork of [processwire-guidgenerator](https://processwire.com/modules/guid-generator/) 
 
 # ProcessWire GUID Generator
